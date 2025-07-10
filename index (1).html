@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Automata Theory Conversion Visualizer</title>
+  <script src="https://cdn.jsdelivr.net/npm/viz.js@2.1.2/viz.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/viz.js@2.1.2/full.render.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    h1 {
+      color: #ffffff;
+      margin-bottom: 40px;
+      font-size: 2.5rem;
+      font-weight: 700;
+      text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      letter-spacing: -0.5px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: auto;
+    }
+    
+    /* Tab Navigation */
+    .tab-container {
+      margin-bottom: 30px;
+    }
+    
+    .tab-buttons {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 8px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .tab-button {
+      background: transparent;
+      border: none;
+      padding: 15px 30px;
+      margin: 0 5px;
+      cursor: pointer;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.8);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .tab-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    .tab-button:hover::before {
+      left: 100%;
+    }
+    
+    .tab-button:hover {
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .tab-button.active {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+      color: white;
+      box-shadow: 0 8px 25px rgba(238, 90, 36, 0.4);
+      transform: translateY(-2px);
+    }
+    
+    .tab-content {
+      display: none;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .tab-content.active {
+      display: block;
+      animation: fadeInUp 0.5s ease;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    h2 {
+      color: #2c3e50;
+      margin-bottom: 25px;
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+    
+    label {
+      color: #34495e;
+      font-weight: 500;
+      margin-right: 15px;
+    }
+    
+    select {
+      font-size: 16px;
+      padding: 12px 20px;
+      margin: 10px;
+      border: 2px solid #e0e6ed;
+      border-radius: 10px;
+      background: white;
+      color: #2c3e50;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      min-width: 250px;
+    }
+    
+    select:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+    
+    button {
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 30px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 10px;
+      box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    }
+    
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+      background: linear-gradient(135deg, #2980b9, #3498db);
+    }
+    
+    button:active {
+      transform: translateY(-1px);
+    }
+    
+    .diagrams {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin-top: 30px;
+      gap: 20px;
+    }
+    
+    .diagram-block {
+      width: 45%;
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      border: none;
+      padding: 25px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .diagram-block::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+    }
+    
+    .diagram-block:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    }
+    
+    .diagram-block h3 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+    
+    /* CFG specific styling */
+    .cfg-display {
+      width: 100%;
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      border: none;
+      padding: 30px;
+      border-radius: 15px;
+      margin-top: 20px;
+      text-align: left;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .cfg-display::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #a8edea, #fed6e3);
+    }
+    
+    .language-desc {
+      background: linear-gradient(135deg, #e8f4fd, #d1ecf1);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border-left: 4px solid #3498db;
+      box-shadow: 0 4px 15px rgba(52, 152, 219, 0.1);
+    }
+    
+    .grammar-rules {
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      padding: 20px;
+      border-radius: 12px;
+      border-left: 4px solid #e74c3c;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.8;
+      box-shadow: 0 4px 15px rgba(231, 76, 60, 0.1);
+    }
+    
+    .grammar-rules h4 {
+      color: #e74c3c;
+      margin-bottom: 15px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+    }
+    
+    .examples {
+      background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+      padding: 20px;
+      border-radius: 12px;
+      margin: 20px 0;
+      border-left: 4px solid #f39c12;
+      box-shadow: 0 4px 15px rgba(243, 156, 18, 0.1);
+    }
+    
+    #nfaGraph svg, #dfaGraph svg, #epsilonNfaGraph svg, #epsilonDfaGraph svg {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+    }
+    
+    .steps {
+      margin-top: 30px;
+      text-align: left;
+      padding: 25px;
+      background: linear-gradient(135deg, #fff9e6, #fef5e7);
+      border: none;
+      border-radius: 15px;
+      border-left: 4px solid #f39c12;
+      box-shadow: 0 8px 25px rgba(243, 156, 18, 0.1);
+    }
+    
+    .steps h3 {
+      color: #d68910;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+    
+    .steps ol {
+      color: #5d4e37;
+    }
+    
+    .steps li {
+      margin-bottom: 8px;
+      padding-left: 5px;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      
+      h1 {
+        font-size: 2rem;
+        margin-bottom: 30px;
+      }
+      
+      .diagram-block {
+        width: 100%;
+      }
+      
+      .tab-buttons {
+        flex-direction: column;
+        padding: 15px;
+      }
+      
+      .tab-button {
+        margin: 5px 0;
+        border-radius: 10px;
+      }
+      
+      .tab-content {
+        padding: 20px;
+      }
+      
+      select {
+        min-width: 200px;
+      }
+    }
+    
+    /* Loading Animation */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Hover Effects for Interactive Elements */
+    select:hover {
+      border-color: #3498db;
+      transform: translateY(-1px);
+    }
+    
+    .language-desc:hover, .examples:hover, .grammar-rules:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #764ba2, #667eea);
+    }
+  </style>
+</head>
+<body>
+  <h1>🔄 Automata Theory Conversion Visualizer</h1>
+  <div class="container">
+    
+    <!-- Tab Navigation -->
+    <div class="tab-container">
+      <div class="tab-buttons">
+        <button class="tab-button active" onclick="showTab('nfa-dfa')">📊 NFA to DFA</button>
+        <button class="tab-button" onclick="showTab('epsilon-nfa-dfa')">⚡ ε-NFA to DFA</button>
+        <button class="tab-button" onclick="showTab('cfl-cfg')">📝 CFL to CFG</button>
+      </div>
+      
+      <!-- NFA to DFA Tab -->
+      <div id="nfa-dfa" class="tab-content active">
+        <h2>📊 NFA to DFA Conversion</h2>
+        <label for="nfaSelect">Select an NFA Example:</label>
+        <select id="nfaSelect">
+          <option value="example1">Example 1: Simple NFA</option>
+          <option value="example2">Example 2: Multiple Transitions</option>
+          <option value="example3">Example 3: Loop on a</option>
+          <option value="example4">Example 4: ab or ba pattern</option>
+          <option value="example5">Example 5: Toggle on 1</option>
+        </select>
+        <button onclick="startNFAConversion()">🚀 Convert to DFA</button>
+        <div class="diagrams">
+          <div class="diagram-block">
+            <h3>🔵 Original NFA</h3>
+            <div id="nfaGraph"></div>
+          </div>
+          <div class="diagram-block">
+            <h3>🟢 Converted DFA</h3>
+            <div id="dfaGraph"></div>
+          </div>
+        </div>
+        <div id="nfa-steps" class="steps"></div>
+      </div>
+      
+      <!-- Epsilon NFA to DFA Tab -->
+      <div id="epsilon-nfa-dfa" class="tab-content">
+        <h2>⚡ ε-NFA to DFA Conversion</h2>
+        <label for="epsilonNfaSelect">Select an ε-NFA Example:</label>
+        <select id="epsilonNfaSelect">
+          <option value="epsilon1">Example 1: Simple Epsilon Transition</option>
+          <option value="epsilon2">Example 2: Multiple Epsilon Chain</option>
+          <option value="epsilon3">Example 3: Epsilon Loop</option>
+          <option value="epsilon4">Example 4: Branching Epsilon</option>
+          <option value="epsilon5">Example 5: Complex Epsilon Network</option>
+        </select>
+        <button onclick="startEpsilonNFAConversion()">⚡ Convert to DFA</button>
+        <div class="diagrams">
+          <div class="diagram-block">
+            <h3>🔵 Original ε-NFA</h3>
+            <div id="epsilonNfaGraph"></div>
+          </div>
+          <div class="diagram-block">
+            <h3>🟢 Converted DFA</h3>
+            <div id="epsilonDfaGraph"></div>
+          </div>
+        </div>
+        <div id="epsilon-steps" class="steps"></div>
+      </div>
+      
+      <!-- CFL to CFG Tab -->
+      <div id="cfl-cfg" class="tab-content">
+        <h2>📝 Context-Free Language to Context-Free Grammar</h2>
+        <label for="cflSelect">Select a CFL Example:</label>
+        <select id="cflSelect">
+          <option value="cfl1">Example 1: Palindromes over {a, b}</option>
+          <option value="cfl2">Example 2: Equal a's and b's</option>
+          <option value="cfl3">Example 3: a^n b^n strings</option>
+          <option value="cfl4">Example 4: Unequal a's and b's</option>
+          <option value="cfl5">Example 5: Arithmetic Expressions</option>
+        </select>
+        <button onclick="showCFLConversion()">📝 Show CFG</button>
+        <div id="cfl-display" class="cfg-display"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Original NFA to DFA examples
+    const nfaExamples = {
+      example1: {
+        dotNFA: `digraph { rankdir=LR; node [shape=doublecircle]; q1;
+          node [shape=circle]; start [shape=point]; start -> q0;
+          q0 -> q0 [label="a"]; q0 -> q0 [label="b"]; q0 -> q1 [label="b"];
+        }`,
+        dotDFA: `digraph { rankdir=LR; node [shape=doublecircle]; B;
+          node [shape=circle]; start [shape=point]; start -> A;
+          A -> A [label="a"]; A -> B [label="b"];
+          B -> A [label="a"]; B -> B [label="b"];
+        }`,
+        steps: [
+          "Step 1: Start at q0 (DFA state A = {q0})",
+          "Step 2: A on 'a' goes to A (q0 → q0)",
+          "Step 3: A on 'b' goes to B (q0 → q0, q1)",
+          "Step 4: Final DFA state B contains NFA final q1"
+        ]
+      },
+      example2: {
+        dotNFA: `digraph { rankdir=LR; node [shape=doublecircle]; q2;
+          node [shape=circle]; start [shape=point]; start -> q0;
+          q0 -> q1 [label="a"]; q0 -> q2 [label="b"]; q1 -> q2 [label="b"];
+        }`,
+        dotDFA: `digraph { rankdir=LR; node [shape=doublecircle]; B C;
+          node [shape=circle]; start [shape=point]; start -> A;
+          A -> B [label="a"]; A -> C [label="b"];
+          B -> C [label="b"];
+        }`,
+        steps: [
+          "Step 1: Start at q0 (DFA state A = {q0})",
+          "Step 2: A on 'a' goes to B = {q1}",
+          "Step 3: A on 'b' goes to C = {q2} (final)",
+          "Step 4: B on 'b' goes to C = {q2} (final)"
+        ]
+      },
+      example3: {
+        dotNFA: `digraph { rankdir=LR; node [shape=doublecircle]; q0;
+          start [shape=point]; start -> q0; q0 -> q0 [label="a"];
+        }`,
+        dotDFA: `digraph { rankdir=LR; node [shape=doublecircle]; A;
+          start [shape=point]; start -> A; A -> A [label="a"];
+        }`,
+        steps: [
+          "Step 1: Only one state q0 (final)",
+          "Step 2: Loop on 'a'",
+          "Step 3: DFA state A = {q0} → loop on 'a'"
+        ]
+      },
+      example4: {
+        dotNFA: `digraph { rankdir=LR; node [shape=doublecircle]; q2 q3;
+          start [shape=point]; start -> q0;
+          q0 -> q1 [label="a"]; q0 -> q1 [label="b"];
+          q1 -> q2 [label="b"]; q1 -> q3 [label="a"];
+        }`,
+        dotDFA: `digraph { rankdir=LR; node [shape=doublecircle]; C D;
+          node [shape=circle]; start [shape=point]; start -> A;
+          A -> B [label="a,b"]; B -> C [label="b"]; B -> D [label="a"];
+        }`,
+        steps: [
+          "Step 1: A = {q0} → on 'a' or 'b' goes to B = {q1}",
+          "Step 2: B on 'b' → C = {q2} (final)",
+          "Step 3: B on 'a' → D = {q3} (final)"
+        ]
+      },
+      example5: {
+        dotNFA: `digraph { rankdir=LR; node [shape=doublecircle]; q1;
+          start [shape=point]; start -> q0;
+          q0 -> q1 [label="1"]; q1 -> q0 [label="1"];
+        }`,
+        dotDFA: `digraph { rankdir=LR; node [shape=doublecircle]; B;
+          start [shape=point]; start -> A;
+          A -> B [label="1"]; B -> A [label="1"];
+        }`,
+        steps: [
+          "Step 1: q0 is A, q1 is B",
+          "Step 2: A on 1 → B, B on 1 → A",
+          "Step 3: Final state is B (q1)"
+        ]
+      }
+    };
+
+    // Epsilon NFA to DFA examples
+    const epsilonNfaExamples = {
+      epsilon1: {
+        dotNFA: `digraph { rankdir=LR; node [shape=doublecircle]; q2;
+          node [shape=circle]; start [shape=point]; start -> q0;
+          q0 -> q1 [label="ε"]; q1 -> q1 [label="a"]; q1 -> q2 [label="b"];
+        }`,
+        dotDFA: `digraph { rankdir=LR; node [shape=doublecircle]; C;
+          node [shape=circle]; start [shape=point]; start -> A;
+          A -> B [label="a"]; A -> C [label="b"];
+          B -> B [label="a"]; B -> C [label="b"];
+        }`,
+        steps: [
+          "Step 1: ε-closure(q0) = {q0, q1} = A",
+          "Step 2: A on 'a' → ε-closure({q1}) = {q1} = B",
+          "Step 3: A on 'b' → ε-closure({q2}) = {q2} = C (final)",
+          "Step 4: B on 'a' → B, B on 'b' → C"
+        ]
+      },
+      epsilon2: {
+        dotNFA: `digraph { rankdir=LR; node [shape=doublecircle]; q3;
+          node [shape=circle]; start [shape=point]; start -> q0;
+          q0 -> q1 [label="ε"]; q1 -> q2 [label="ε"]; q2 -> q3 [label="a"];
+        }`,
+        dotDFA: `digraph { rankdir=LR; node [shape=doublecircle]; B;
+          node [shape=circle]; start [shape=point]; start -> A;
+          A -> B [label="a"];
+        }`,
+        steps: [
+          "Step 1: ε-closure(q0) = {q0, q1, q2} = A",
+          "Step 2: A on 'a' → ε-closure({q3}) = {q3} = B (final)",
+          "Step 3: Multiple epsilon transitions collapsed into single state"
+        ]
+      },
+      epsilon3: {
+        dotNFA: `digraph { rankdir=LR; node [shape=doublecircle]; q2;
+          node [shape=circle]; start [shape=point]; start -> q0;
+          q0 -> q1 [label="ε"]; q1 -> q0 [label="ε"]; q1 -> q2 [label="a"];
+        }`,
+        dotDFA: `digraph { rankdir=LR; node [shape=doublecircle]; B;
+          node [shape=circle]; start [shape=point]; start -> A;
+          A -> B [label="a"];
+        }`,
+        steps: [
+          "Step 1: ε-closure(q0) = {q0, q1} = A (epsilon loop)",
+          "Step 2: ε-closure(q1) = {q0, q1} = A (same closure)",
+          "Step 3: A on 'a' → ε-closure({q2}) = {q2} = B (final)"
+        ]
+      },
+      epsilon4: {
+        dotNFA: `digraph { rankdir=LR; node [shape=doublecircle]; q2 q3;
+          node [shape=circle]; start [shape=point]; start -> q0;
+          q0 -> q1 [label="ε"]; q0 -> q2 [label="ε"]; q1 -> q3 [label="a"];
+        }`,
+        dotDFA: `digraph { rankdir=LR; node [shape=doublecircle]; A B;
+          node [shape=circle]; start [shape=point]; start -> A;
+          A -> B [label="a"];
+        }`,
+        steps: [
+          "Step 1: ε-closure(q0) = {q0, q1, q2} = A (final - contains q2)",
+          "Step 2: A on 'a' → ε-closure({q3}) = {q3} = B (final)",
+          "Step 3: Branching epsilon creates initial final state"
+        ]
+      },
+      epsilon5: {
+        dotNFA: `digraph { rankdir=LR; node [shape=doublecircle]; q4;
+          node [shape=circle]; start [shape=point]; start -> q0;
+          q0 -> q1 [label="ε"]; q1 -> q1 [label="a,b"]; q1 -> q2 [label="a"];
+          q2 -> q3 [label="b"]; q3 -> q4 [label="b"];
+        }`,
+        dotDFA: `digraph { rankdir=LR; node [shape=doublecircle]; E;
+          node [shape=circle]; start [shape=point]; start -> A;
+          A -> B [label="a"]; A -> C [label="b"];
+          B -> B [label="a"]; B -> D [label="b"];
+          C -> B [label="a"]; C -> C [label="b"];
+          D -> B [label="a"]; D -> E [label="b"];
+          E -> B [label="a"]; E -> C [label="b"];
+        }`,
+        steps: [
+          "Step 1: ε-closure(q0) = {q0, q1} = A",
+          "Step 2: A on 'a' → ε-closure({q1, q2}) = {q1, q2} = B",
+          "Step 3: A on 'b' → ε-closure({q1}) = {q1} = C",
+          "Step 4: Pattern (a|b)*abb - E is final state"
+        ]
+      }
+    };
+
+    // CFL to CFG examples
+    const cflExamples = {
+      cfl1: {
+        title: "Palindromes over {a, b}",
+        description: "Language of strings that read the same forwards and backwards",
+        language: "L = {w | w = w^R, where w ∈ {a, b}*}",
+        examples: "ε, a, b, aa, bb, aba, bab, abba, baab, aabaa, ...",
+        grammar: `S → ε
+S → a
+S → b  
+S → aSa
+S → bSb`,
+        explanation: "Base cases handle empty string and single characters. Recursive rules add same character to both ends of smaller palindrome."
+      },
+      cfl2: {
+        title: "Equal number of a's and b's",
+        description: "Language of strings with equal count of 'a' and 'b' characters",
+        language: "L = {w | na(w) = nb(w), where w ∈ {a, b}*}",
+        examples: "ε, ab, ba, aabb, abab, baba, bbaa, abba, baab, ...",
+        grammar: `S → ε
+S → aSb
+S → bSa
+S → SS`,
+        explanation: "Rules ensure equal counts by pairing each 'a' with a 'b'. SS allows concatenation of valid strings."
+      },
+      cfl3: {
+        title: "Strings of form a^n b^n",
+        description: "Language of strings with n 'a's followed by n 'b's",
+        language: "L = {a^n b^n | n ≥ 0}",
+        examples: "ε, ab, aabb, aaabbb, aaaabbbb, aaaaabbbbb, ...",
+        grammar: `S → ε
+S → aSb`,
+        explanation: "Simple recursive grammar adds one 'a' at beginning and one 'b' at end in each step."
+      },
+      cfl4: {
+        title: "Strings where n ≠ m (a^n b^m)",
+        description: "Language of strings with unequal numbers of 'a's and 'b's",
+        language: "L = {a^n b^m | n ≠ m, n, m ≥ 0}",
+        examples: "a, b, aa, bb, aab, abb, aaab, abbb, aaaab, abbbb, ...",
+        grammar: `S → A | B
+A → aAb | aA | a
+B → aBb | Bb | b`,
+        explanation: "A generates more a's than b's, B generates more b's than a's. Union covers all unequal cases."
+      },
+      cfl5: {
+        title: "Arithmetic Expressions",
+        description: "Simple arithmetic expressions with variable 'a' and operators '+', '*'",
+        language: "Expressions with proper parenthesization",
+        examples: "a, (a+a), (a*a), (a+(a*a)), ((a*a)+a), (a*(a+a)), ...",
+        grammar: `E → a
+E → (E + E)
+E → (E * E)`,
+        explanation: "Recursive grammar for nested expressions. Base case is variable 'a', recursive cases combine expressions with operators."
+      }
+    };
+
+    // Tab switching function
+    function showTab(tabName) {
+      // Hide all tab contents
+      const tabContents = document.querySelectorAll('.tab-content');
+      tabContents.forEach(content => content.classList.remove('active'));
+      
+      // Remove active class from all buttons
+      const tabButtons = document.querySelectorAll('.tab-button');
+      tabButtons.forEach(button => button.classList.remove('active'));
+      
+      // Show selected tab content
+      document.getElementById(tabName).classList.add('active');
+      
+      // Add active class to clicked button
+      event.target.classList.add('active');
+    }
+
+    // NFA to DFA conversion
+    function startNFAConversion() {
+      const selected = document.getElementById("nfaSelect").value;
+      const example = nfaExamples[selected];
+      const viz = new Viz();
+
+      viz.renderSVGElement(example.dotNFA).then(svg => {
+        document.getElementById("nfaGraph").innerHTML = "";
+        document.getElementById("nfaGraph").appendChild(svg);
+      });
+
+      viz.renderSVGElement(example.dotDFA).then(svg => {
+        document.getElementById("dfaGraph").innerHTML = "";
+        document.getElementById("dfaGraph").appendChild(svg);
+      });
+
+      const stepsHtml = example.steps.map(s => `<li>${s}</li>`).join("");
+      document.getElementById("nfa-steps").innerHTML = `<h3>🔄 Conversion Steps:</h3><ol>${stepsHtml}</ol>`;
+    }
+
+    // Epsilon NFA to DFA conversion
+    function startEpsilonNFAConversion() {
+      const selected = document.getElementById("epsilonNfaSelect").value;
+      const example = epsilonNfaExamples[selected];
+      const viz = new Viz();
+
+      viz.renderSVGElement(example.dotNFA).then(svg => {
+        document.getElementById("epsilonNfaGraph").innerHTML = "";
+        document.getElementById("epsilonNfaGraph").appendChild(svg);
+      });
+
+      viz.renderSVGElement(example.dotDFA).then(svg => {
+        document.getElementById("epsilonDfaGraph").innerHTML = "";
+        document.getElementById("epsilonDfaGraph").appendChild(svg);
+      });
+
+      const stepsHtml = example.steps.map(s => `<li>${s}</li>`).join("");
+      document.getElementById("epsilon-steps").innerHTML = `<h3>⚡ ε-Closure and Conversion Steps:</h3><ol>${stepsHtml}</ol>`;
+    }
+
+    // CFL to CFG display
+    function showCFLConversion() {
+      const selected = document.getElementById("cflSelect").value;
+      const example = cflExamples[selected];
+      
+      const displayHtml = `
+        <h3>📝 ${example.title}</h3>
+        <div class="language-desc">
+          <p><strong>📖 Description:</strong> ${example.description}</p>
+          <p><strong>🔤 Formal Language:</strong> ${example.language}</p>
+        </div>
+        <div class="examples">
+          <p><strong>💡 Example Strings:</strong> ${example.examples}</p>
+        </div>
+        <div class="grammar-rules">
+          <h4>📋 Context-Free Grammar:</h4>
+          <pre>${example.grammar}</pre>
+        </div>
+        <div class="language-desc">
+          <p><strong>💭 Explanation:</strong> ${example.explanation}</p>
+        </div>
+      `;
+      
+      document.getElementById("cfl-display").innerHTML = displayHtml;
+    }
+
+    // Initialize with first example
+    window.onload = function() {
+      startNFAConversion();
+    };
+  </script>
+</body>
+</html>
+
+
+
